@@ -1,0 +1,19 @@
+PODS:
+  - TZImagePickerController (3.8.1.BAITU):
+    - TZImagePickerController/Core (= 3.8.1.BAITU)
+  - TZImagePickerController/Core (3.8.1.BAITU)
+
+DEPENDENCIES:
+  - TZImagePickerController (from `../`)
+
+EXTERNAL SOURCES:
+  TZImagePickerController:
+    :dev: 1
+    :path: "../"
+
+SPEC CHECKSUMS:
+  TZImagePickerController: 25a842303d6bd2b87e7cbf07a20031f4d2b5ed0b
+
+PODFILE CHECKSUM: 02b478f4053ec0ccf2cb55adc450d4691b55a873
+
+COCOAPODS: 1.15.2

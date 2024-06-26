@@ -1,0 +1,34 @@
+#plugin 'cocoapods-publish'
+
+# 开启二进制模式
+#baitu_use_frameworks!
+#
+#use_frameworks!
+
+platform :ios, '11.4'
+
+target 'TZImagePickerController_Example' do
+
+  # 指定源码模式
+  pod 'TZImagePickerController', :path => '../', :dev => 1
+
+  # 指定二进制模式
+  # pod 'TZImagePickerController', :path => '../'
+
+  target 'TZImagePickerController_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
+
+# 跳过资源签名
+post_install do |installer|
+  installer.generated_projects.each do |project|
+    project.targets.each do |target|
+        target.build_configurations.each do |config|
+            config.build_settings['CODE_SIGN_IDENTITY'] = ''
+         end
+    end
+  end
+end
