@@ -840,13 +840,38 @@ static CGFloat itemMargin = 5;
     UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera;
     if ([UIImagePickerController isSourceTypeAvailable: sourceType]) {
         self.imagePickerVc.sourceType = sourceType;
+        // sourceType 对应的可用的 MediaTypes
+        NSArray<NSString *> *availableMediaTypesArr = [UIImagePickerController availableMediaTypesForSourceType:sourceType];
+        if (availableMediaTypesArr.count == 0) {
+            // 没有可用的MediaTypes, 提示不可用
+            [self showCameraCannotUseTip];
+            return;
+        }
+        // 我们需要使用的mediaTypes
         NSMutableArray *mediaTypes = [NSMutableArray array];
+        // 图片类型
+        NSString *imageType = @"";
+        // 视频类型
+        NSString *moveType = @"";
         if (tzImagePickerVc.allowTakePicture) {
-            [mediaTypes addObject:(NSString *)kUTTypeImage];
+            imageType = (NSString *)kUTTypeImage;
         }
         if (tzImagePickerVc.allowTakeVideo) {
-            [mediaTypes addObject:(NSString *)kUTTypeMovie];
+            moveType = (NSString *)kUTTypeMovie;;
             self.imagePickerVc.videoMaximumDuration = tzImagePickerVc.videoMaximumDuration;
+        }
+        // 遍历sourceType 对应的可用的 MediaTypes, 找出我们要使用的类型
+        for (NSString *typeString in availableMediaTypesArr) {
+            if ([typeString isEqualToString:imageType] ||
+                [typeString isEqualToString:moveType]) {
+                [mediaTypes addObject:typeString];
+            }
+        }
+        
+        if (mediaTypes.count == 0) {
+            // 没有可用的MediaTypes, 提示不可用
+            [self showCameraCannotUseTip];
+            return;
         }
         self.imagePickerVc.mediaTypes= mediaTypes;
         if (tzImagePickerVc.uiImagePickerControllerSettingBlock) {
@@ -857,6 +882,20 @@ static CGFloat itemMargin = 5;
         NSLog(@"模拟器中无法打开照相机,请在真机中使用");
     }
 }
+
+/// 相机不可用提示
+- (void)showCameraCannotUseTip
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *title = [NSBundle tz_localizedStringForKey:@"Can not use camera"];
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:@"" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *cancelAct = [UIAlertAction actionWithTitle:[NSBundle tz_localizedStringForKey:@"Cancel"] style:UIAlertActionStyleCancel handler:nil];
+        [alertController addAction:cancelAct];
+        [self.navigationController presentViewController:alertController animated:YES completion:nil];
+    });
+}
+
+
 
 - (void)refreshBottomToolBarStatus {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
