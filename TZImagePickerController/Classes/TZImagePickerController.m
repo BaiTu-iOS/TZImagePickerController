@@ -4,7 +4,7 @@
 //
 //  Created by 谭真 on 15/12/24.
 //  Copyright © 2015年 谭真. All rights reserved.
-//  version 3.8.1 - 2022.04.15
+//  version 3.8.6 - 2024.06.27
 //  更多信息，请前往项目的github地址：https://github.com/banchichen/TZImagePickerController
 
 #import "TZImagePickerController.h"
@@ -193,7 +193,6 @@
         self.allowTakeVideo = YES;
         self.videoMaximumDuration = 10 * 60;
         self.sortAscendingByModificationDate = YES;
-        self.autoDismiss = YES;
         self.columnNumber = columnNumber;
         [self configDefaultSetting];
         
@@ -289,6 +288,7 @@
 }
 
 - (void)configDefaultSetting {
+    self.autoDismiss = YES;
     self.autoSelectCurrentWhenDone = YES;
     self.timeout = 30;
     self.photoWidth = 828.0;
@@ -303,7 +303,9 @@
     self.needFixComposition = NO;
     self.statusBarStyle = UIStatusBarStyleLightContent;
     self.cannotSelectLayerColor = [[UIColor whiteColor] colorWithAlphaComponent:0.8];
+#ifdef TZ_HAVE_LOCATION_CODE
     self.allowCameraLocation = YES;
+#endif
     self.presetName = AVAssetExportPresetMediumQuality;
     self.maxCropVideoDuration = 30;
     
@@ -519,6 +521,8 @@
     if (allowCrop) { // 允许裁剪的时候，不能选原图和GIF
         self.allowPickingOriginalPhoto = NO;
         self.allowPickingGif = NO;
+        self.photoWidth = 1200;
+        self.photoPreviewMaxWidth = 1200;
     }
 }
 
@@ -674,6 +678,15 @@
 - (void)removeSelectedModel:(TZAssetModel *)model {
     [_selectedModels removeObject:model];
     [_selectedAssetIds removeObject:model.asset.localIdentifier];
+}
+
+- (void)setSelectedModels:(NSMutableArray<TZAssetModel *> *)selectedModels {
+    _selectedModels = selectedModels;
+    NSMutableArray *selectedAssetIds = [NSMutableArray array];
+    for (TZAssetModel *model in selectedModels) {
+        [selectedAssetIds addObject:model.asset.localIdentifier];
+    }
+    _selectedAssetIds = selectedAssetIds;
 }
 
 - (UIImage *)createImageWithColor:(UIColor *)color size:(CGSize)size radius:(CGFloat)radius {
@@ -1013,7 +1026,7 @@
 
 + (BOOL)tz_isRightToLeftLayout {
     if (@available(iOS 9.0, *)) {
-        if ([UIView userInterfaceLayoutDirectionForSemanticContentAttribute:UISemanticContentAttributeUnspecified] == UIUserInterfaceLayoutDirectionRightToLeft) {
+        if ([UIView userInterfaceLayoutDirectionForSemanticContentAttribute:UIView.appearance.semanticContentAttribute] == UIUserInterfaceLayoutDirectionRightToLeft) {
             return YES;
         }
     } else {

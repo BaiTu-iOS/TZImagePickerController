@@ -15,7 +15,6 @@
 #import "TZImageManager.h"
 #import "TZVideoPlayerController.h"
 #import "TZGifPhotoPreviewController.h"
-#import "TZLocationManager.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "TZImageRequestOperation.h"
 #import "TZAuthLimitedFooterTipView.h"
@@ -152,7 +151,7 @@ static CGFloat itemMargin = 5;
         [self configCollectionView];
         self->_collectionView.hidden = YES;
         [self configBottomToolBar];
-        
+        [self refreshBottomToolBarStatus];
         [self prepareScrollCollectionViewToBottom];
     });
 }
@@ -205,18 +204,23 @@ static CGFloat itemMargin = 5;
     
     _collectionView.contentSize = CGSizeMake(self.view.tz_width, (([self getAllCellCount] + self.columnNumber - 1) / self.columnNumber) * self.view.tz_width);
     if (_models.count == 0) {
-        _noDataLabel = [UILabel new];
+        [_collectionView addSubview:self.noDataLabel];
+    } else if (_noDataLabel) {
+        [_noDataLabel removeFromSuperview];
+        _noDataLabel = nil;
+    }
+}
+
+- (UILabel *)noDataLabel {
+    if (!_noDataLabel) {
+        _noDataLabel = [[UILabel alloc] initWithFrame:_collectionView.bounds];
         _noDataLabel.textAlignment = NSTextAlignmentCenter;
         _noDataLabel.text = [NSBundle tz_localizedStringForKey:@"No Photos or Videos"];
         CGFloat rgb = 153 / 256.0;
         _noDataLabel.textColor = [UIColor colorWithRed:rgb green:rgb blue:rgb alpha:1.0];
         _noDataLabel.font = [UIFont boldSystemFontOfSize:20];
-        _noDataLabel.frame = _collectionView.bounds;
-        [_collectionView addSubview:_noDataLabel];
-    } else if (_noDataLabel) {
-        [_noDataLabel removeFromSuperview];
-        _noDataLabel = nil;
     }
+    return _noDataLabel;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -826,6 +830,7 @@ static CGFloat itemMargin = 5;
 - (void)pushImagePickerController {
     // 提前定位
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+#ifdef TZ_HAVE_LOCATION_CODE
     if (tzImagePickerVc.allowCameraLocation) {
         __weak typeof(self) weakSelf = self;
         [[TZLocationManager manager] startLocationWithSuccessBlock:^(NSArray<CLLocation *> *locations) {
@@ -836,42 +841,18 @@ static CGFloat itemMargin = 5;
             strongSelf.location = nil;
         }];
     }
+#endif
     
     UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera;
     if ([UIImagePickerController isSourceTypeAvailable: sourceType]) {
         self.imagePickerVc.sourceType = sourceType;
-        // sourceType 对应的可用的 MediaTypes
-        NSArray<NSString *> *availableMediaTypesArr = [UIImagePickerController availableMediaTypesForSourceType:sourceType];
-        if (availableMediaTypesArr.count == 0) {
-            // 没有可用的MediaTypes, 提示不可用
-            [self showCameraCannotUseTip];
-            return;
-        }
-        // 我们需要使用的mediaTypes
         NSMutableArray *mediaTypes = [NSMutableArray array];
-        // 图片类型
-        NSString *imageType = @"";
-        // 视频类型
-        NSString *moveType = @"";
         if (tzImagePickerVc.allowTakePicture) {
-            imageType = (NSString *)kUTTypeImage;
+            [mediaTypes addObject:(NSString *)kUTTypeImage];
         }
         if (tzImagePickerVc.allowTakeVideo) {
-            moveType = (NSString *)kUTTypeMovie;;
+            [mediaTypes addObject:(NSString *)kUTTypeMovie];
             self.imagePickerVc.videoMaximumDuration = tzImagePickerVc.videoMaximumDuration;
-        }
-        // 遍历sourceType 对应的可用的 MediaTypes, 找出我们要使用的类型
-        for (NSString *typeString in availableMediaTypesArr) {
-            if ([typeString isEqualToString:imageType] ||
-                [typeString isEqualToString:moveType]) {
-                [mediaTypes addObject:typeString];
-            }
-        }
-        
-        if (mediaTypes.count == 0) {
-            // 没有可用的MediaTypes, 提示不可用
-            [self showCameraCannotUseTip];
-            return;
         }
         self.imagePickerVc.mediaTypes= mediaTypes;
         if (tzImagePickerVc.uiImagePickerControllerSettingBlock) {
@@ -882,20 +863,6 @@ static CGFloat itemMargin = 5;
         NSLog(@"模拟器中无法打开照相机,请在真机中使用");
     }
 }
-
-/// 相机不可用提示
-- (void)showCameraCannotUseTip
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *title = [NSBundle tz_localizedStringForKey:@"Can not use camera"];
-        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:@"" preferredStyle:UIAlertControllerStyleAlert];
-        UIAlertAction *cancelAct = [UIAlertAction actionWithTitle:[NSBundle tz_localizedStringForKey:@"Cancel"] style:UIAlertActionStyleCancel handler:nil];
-        [alertController addAction:cancelAct];
-        [self.navigationController presentViewController:alertController animated:YES completion:nil];
-    });
-}
-
-
 
 - (void)refreshBottomToolBarStatus {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
@@ -998,12 +965,17 @@ static CGFloat itemMargin = 5;
     for (TZAssetModel *model in selectedModels) {
         [selectedAssets addObject:model.asset];
     }
+    // 拿到了最新的models，在此刷新照片选中状态
+    // 由于可能有照片权限变化，也需要刷新selectedModels https://github.com/banchichen/TZImagePickerController/pull/1658
+    NSMutableArray *newSelectedModels = [NSMutableArray array];
     for (TZAssetModel *model in _models) {
         model.isSelected = NO;
         if ([selectedAssets containsObject:model.asset]) {
             model.isSelected = YES;
+            [newSelectedModels addObject:model];
         }
     }
+    tzImagePickerVc.selectedModels = newSelectedModels;
 }
 
 /// 选中/取消选中某张照片
@@ -1142,7 +1114,11 @@ static CGFloat itemMargin = 5;
     dispatch_async(dispatch_get_main_queue(), ^{
         PHFetchResultChangeDetails *changeDetail = [changeInstance changeDetailsForFetchResult:self.model.result];
         if (changeDetail == nil) return;
-        if (changeDetail.hasIncrementalChanges == NO) {
+        if ([[TZImageManager manager] isPHAuthorizationStatusLimited]) {
+            self.model.result = changeDetail.fetchResultAfterChanges;
+            self.model.count = changeDetail.fetchResultAfterChanges.count;
+            [self fetchAssetModels];
+        } else if (changeDetail.hasIncrementalChanges == NO) {
             [self.model refreshFetchResult];
             [self fetchAssetModels];
         } else {
