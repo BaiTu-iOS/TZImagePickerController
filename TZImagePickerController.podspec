@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'TZImagePickerController'
-  s.version          = '3.8.1.BAITU'
+  s.version          = '3.8.1'
   s.summary          = 'A short description of TZImagePickerController.'
 
   s.description      = <<-DESC
@@ -9,6 +9,7 @@ Pod::Spec.new do |s|
 
 
   s.homepage         = 'https://github.com/BaiTu-iOS/TZImagePickerController.git'
+  s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'wudongge' => 'dg.wu@liaoke.tv' }
   s.source           = { :git => 'https://github.com/BaiTu-iOS/TZImagePickerController.git', :tag => s.version.to_s }
 
