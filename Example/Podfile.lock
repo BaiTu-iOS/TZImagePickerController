@@ -1,7 +1,7 @@
 PODS:
-  - TZImagePickerController (3.8.1.BAITU):
-    - TZImagePickerController/Core (= 3.8.1.BAITU)
-  - TZImagePickerController/Core (3.8.1.BAITU)
+  - TZImagePickerController (3.8.1):
+    - TZImagePickerController/Core (= 3.8.1)
+  - TZImagePickerController/Core (3.8.1)
 
 DEPENDENCIES:
   - TZImagePickerController (from `../`)
@@ -12,7 +12,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  TZImagePickerController: 25a842303d6bd2b87e7cbf07a20031f4d2b5ed0b
+  TZImagePickerController: 1f56420703cf9b3623e2bb02dc634c9daadedcae
 
 PODFILE CHECKSUM: 02b478f4053ec0ccf2cb55adc450d4691b55a873
 
