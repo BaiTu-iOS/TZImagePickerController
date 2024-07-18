@@ -12,6 +12,9 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 
 @interface TZImageManager ()
+
+@property (nonatomic, strong) NSLock *fetchAlbumsLock;
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @end
@@ -32,6 +35,7 @@ static dispatch_once_t onceToken;
         // manager.cachingImageManager.allowsCachingHighQualityImages = YES;
         
         [manager configTZScreenWidth];
+        manager.fetchAlbumsLock = [[NSLock alloc] init];
     });
     return manager;
 }
@@ -128,17 +132,29 @@ static dispatch_once_t onceToken;
         option.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:self.sortAscendingByModificationDate]];
     }
     PHFetchResult *smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
+    // 多线程造成内存分配冲突,有时会引起引起 [PHAsset fetchAssetsInAssetCollection: options:]方法 被多个线程同时访问造成崩溃
+    // 这里加锁,防止多线程访问崩溃
     for (PHAssetCollection *collection in smartAlbums) {
+        
+        [self.fetchAlbumsLock unlock];
+        
         // 有可能是PHCollectionList类的的对象，过滤掉
-        if (![collection isKindOfClass:[PHAssetCollection class]]) continue;
+        if (![collection isKindOfClass:[PHAssetCollection class]]) {
+            [self.fetchAlbumsLock unlock];
+            continue;
+        };
         // 过滤空相册
-        if (collection.estimatedAssetCount <= 0) continue;
+        if (collection.estimatedAssetCount <= 0){
+            [self.fetchAlbumsLock unlock];
+            continue;
+        };
         if ([self isCameraRollAlbum:collection]) {
             PHFetchResult *fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:option];
             model = [self modelWithResult:fetchResult collection:collection isCameraRoll:YES needFetchAssets:needFetchAssets options:option];
             if (completion) completion(model);
             break;
         }
+        [self.fetchAlbumsLock unlock];
     }
 }
 
@@ -168,27 +184,48 @@ static dispatch_once_t onceToken;
     PHFetchResult *sharedAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAlbumCloudShared options:nil];
     NSArray *allAlbums = @[myPhotoStreamAlbum,smartAlbums,topLevelUserCollections,syncedAlbums,sharedAlbums];
     for (PHFetchResult *fetchResult in allAlbums) {
+        // 多线程造成内存分配冲突,有时会引起引起 [PHAsset fetchAssetsInAssetCollection: options:]方法 被多个线程同时访问造成崩溃
+        // 这里加锁,防止多线程访问崩溃
         for (PHAssetCollection *collection in fetchResult) {
+            [self.fetchAlbumsLock lock];
             // 有可能是PHCollectionList类的的对象，过滤掉
-            if (![collection isKindOfClass:[PHAssetCollection class]]) continue;
+            if (![collection isKindOfClass:[PHAssetCollection class]]) {
+                [self.fetchAlbumsLock unlock];
+                continue;
+            };
             // 过滤空相册
-            if (collection.estimatedAssetCount <= 0 && ![self isCameraRollAlbum:collection]) continue;
+            if (collection.estimatedAssetCount <= 0 && ![self isCameraRollAlbum:collection]) {
+                [self.fetchAlbumsLock unlock];
+                continue;
+            };
             PHFetchResult *fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:option];
-            if (fetchResult.count < 1 && ![self isCameraRollAlbum:collection]) continue;
+            if (fetchResult.count < 1 && ![self isCameraRollAlbum:collection]) {
+                [self.fetchAlbumsLock unlock];
+                continue;
+            };
             
             if ([self.pickerDelegate respondsToSelector:@selector(isAlbumCanSelect:result:)]) {
                 if (![self.pickerDelegate isAlbumCanSelect:collection.localizedTitle result:fetchResult]) {
+                    [self.fetchAlbumsLock unlock];
                     continue;
                 }
             }
             
-            if (collection.assetCollectionSubtype == PHAssetCollectionSubtypeSmartAlbumAllHidden) continue;
-            if (collection.assetCollectionSubtype == 1000000201) continue; //『最近删除』相册
+            if (collection.assetCollectionSubtype == PHAssetCollectionSubtypeSmartAlbumAllHidden) {
+                [self.fetchAlbumsLock unlock];
+                continue;
+            };
+            if (collection.assetCollectionSubtype == 1000000201) {
+                [self.fetchAlbumsLock unlock];
+                continue;
+            };
+            //『最近删除』相册
             if ([self isCameraRollAlbum:collection]) {
                 [albumArr insertObject:[self modelWithResult:fetchResult collection:collection isCameraRoll:YES needFetchAssets:needFetchAssets options:option] atIndex:0];
             } else {
                 [albumArr addObject:[self modelWithResult:fetchResult collection:collection isCameraRoll:NO needFetchAssets:needFetchAssets options:option]];
             }
+            [self.fetchAlbumsLock unlock];
         }
     }
     if (completion) {
