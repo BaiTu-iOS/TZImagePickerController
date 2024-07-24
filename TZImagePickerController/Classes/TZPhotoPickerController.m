@@ -605,15 +605,20 @@ static CGFloat itemMargin = 5;
     cell.photoSelImage = tzImagePickerVc.photoSelImage;
     cell.assetCellDidSetModelBlock = tzImagePickerVc.assetCellDidSetModelBlock;
     cell.assetCellDidLayoutSubviewsBlock = tzImagePickerVc.assetCellDidLayoutSubviewsBlock;
-    TZAssetModel *model;
+    TZAssetModel *model = nil;
     if (tzImagePickerVc.sortAscendingByModificationDate) {
-        model = _models[indexPath.item];
+        if (indexPath.item < _models.count) {
+            model = _models[indexPath.item];
+            cell.model = model;
+        }
     } else {
         NSInteger diff = [self getAllCellCount] - _models.count;
-        model = _models[indexPath.item - diff];;
+        if (indexPath.item - diff < _models.count) {
+            model = _models[indexPath.item - diff];
+            cell.model = model;
+        }
     }
     cell.allowPickingGif = tzImagePickerVc.allowPickingGif;
-    cell.model = model;
     if (model.isSelected && tzImagePickerVc.showSelectedIndex) {
         cell.index = [tzImagePickerVc.selectedAssetIds indexOfObject:model.asset.localIdentifier] + 1;
     }
@@ -707,6 +712,7 @@ static CGFloat itemMargin = 5;
     if (!tzImagePickerVc.sortAscendingByModificationDate) {
         index -= [self getAllCellCount] - _models.count;
     }
+    if (index >= _models.count) return;
     TZAssetModel *model = _models[index];
     if (model.type == TZAssetModelMediaTypeVideo && !tzImagePickerVc.allowPickingMultipleVideo) {
         if (tzImagePickerVc.selectedModels.count > 0) {

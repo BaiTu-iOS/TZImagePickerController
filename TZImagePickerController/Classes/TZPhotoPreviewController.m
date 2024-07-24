@@ -485,7 +485,10 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     TZImagePickerController *_tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-    TZAssetModel *model = _models[indexPath.item];
+    TZAssetModel *model = nil;
+    if (indexPath.item < _models.count) {
+        model = _models[indexPath.item];
+    }
     
     TZAssetPreviewCell *cell;
     __weak typeof(self) weakSelf = self;
@@ -532,8 +535,9 @@
             [weakSelf didICloudSyncStatusChanged:model];
         };
     }
-    
-    cell.model = model;
+    if (model) {
+        cell.model = model;
+    }
     [cell setSingleTapGestureBlock:^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
         [strongSelf didTapPreviewCell];
