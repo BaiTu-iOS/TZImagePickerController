@@ -264,7 +264,9 @@
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     TZVideoPictureCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"TZVideoPictureCell" forIndexPath:indexPath];
-    cell.imgView.image = self.videoImgArray[indexPath.item];
+    if (indexPath.item < self.videoImgArray.count) {
+        cell.imgView.image = self.videoImgArray[indexPath.item];
+    }
     return cell;
 }
 
