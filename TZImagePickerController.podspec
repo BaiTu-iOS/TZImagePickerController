@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'TZImagePickerController'
-  s.version          = '3.8.1.BAITU.b2'
+  s.version          = '3.8.1.BAITU.b3'
   s.summary          = 'A short description of TZImagePickerController.'
 
   s.description      = <<-DESC
