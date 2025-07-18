@@ -115,6 +115,10 @@ static CGFloat itemMargin = 5;
     
     self.operationQueue = [[NSOperationQueue alloc] init];
     self.operationQueue.maxConcurrentOperationCount = 3;
+
+    if (_showTakePhotoBtn && (tzImagePickerVc.goToTakePicture || tzImagePickerVc.goToTakeVideo)) {
+        [self performSelector:@selector(takePhoto) withObject:nil afterDelay:0.1];
+    }
 }
 
 - (void)fetchAssetModels {

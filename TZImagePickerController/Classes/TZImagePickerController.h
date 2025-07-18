@@ -119,6 +119,9 @@
 /// 默认为YES，如果设置为NO, 用户将不能拍摄照片
 @property (nonatomic, assign) BOOL allowTakePicture;
 
+/// 默认为NO，如果设置为YES, 并且allowTakePicture 为 YES, 将会直接进入拍照界面
+@property (nonatomic, assign) BOOL goToTakePicture;
+
 #ifdef TZ_HAVE_LOCATION_CODE
 @property (nonatomic, assign) BOOL allowCameraLocation;
 #endif
@@ -126,6 +129,10 @@
 /// Default is YES, if set NO, user can't take video.
 /// 默认为YES，如果设置为NO, 用户将不能拍摄视频
 @property(nonatomic, assign) BOOL allowTakeVideo;
+
+/// 默认为NO，如果设置为YES, 并且allowTakeVideo 为 YES, 将会直接进入拍视频界面
+@property (nonatomic, assign) BOOL goToTakeVideo;
+
 /// Default value is 10 minutes / 视频最大拍摄时间，默认是10分钟，单位是秒
 @property (assign, nonatomic) NSTimeInterval videoMaximumDuration;
 /// Customizing UIImagePickerController's other properties, such as videoQuality / 定制UIImagePickerController的其它属性，比如视频拍摄质量videoQuality
