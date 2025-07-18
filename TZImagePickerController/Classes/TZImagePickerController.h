@@ -236,6 +236,13 @@
 - (UIAlertController *)showAlertWithTitle:(NSString *)title;
 - (void)showProgressHUD;
 - (void)hideProgressHUD;
+
+/// 打开相机去拍照（allowTakePicture 为 YES时，设置该方法会进入拍视频）
+- (void)openCameraToTakePicture;
+
+/// 打开相机去拍视频（allowTakeVideo 为 YES时，设置该方法会进入拍视频）
+- (void)openCameraToTakeVideo;
+
 @property (nonatomic, assign) BOOL isSelectOriginalPhoto;
 @property (assign, nonatomic) BOOL needShowStatusBar;
 
