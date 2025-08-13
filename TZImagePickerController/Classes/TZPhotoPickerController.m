@@ -117,6 +117,8 @@ static CGFloat itemMargin = 5;
     self.operationQueue.maxConcurrentOperationCount = 3;
 
     if (_showTakePhotoBtn && (tzImagePickerVc.goToTakePicture || tzImagePickerVc.goToTakeVideo)) {
+        tzImagePickerVc.goToTakePicture = NO;
+        tzImagePickerVc.goToTakeVideo = NO;
         [self performSelector:@selector(takePhoto) withObject:nil afterDelay:0.1];
     }
 }
