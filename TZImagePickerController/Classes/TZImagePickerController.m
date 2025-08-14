@@ -772,6 +772,35 @@
     self.goToTakeVideo = YES;
 }
 
+/// 是否需要直接进入系统相机拍照或拍视频
+- (BOOL)tzNeedGoToSystemCameraToTakePhotoOrVideo
+{
+    // 是否允许拍照
+    BOOL canTakePhoto = self.allowTakePicture && self.allowPickingImage;
+    // 是否允许拍视频
+    BOOL canTakeVideo = self.allowTakeVideo && self.allowPickingVideo;
+
+    return (canTakePhoto && self.goToTakePicture) || (canTakeVideo && self.goToTakeVideo);
+}
+
+/// 重置不需要直接进入拍照或拍视频
+- (void)tzResetSystemCameraStatus
+{
+    self.goToTakeVideo = NO;
+    self.goToTakePicture = NO;
+}
+
+/// 显示拍照或拍视频界面 -- 在presentViewController:animated:completion:的completion回调里面调用
+- (void)tzShowCameraTakePhotoOrVideoView
+{
+    NSArray *vcs = self.viewControllers;
+    UIViewController *lastVC = vcs.lastObject;
+
+    if (![lastVC isKindOfClass:TZPhotoPickerController.class]) return;
+    TZPhotoPickerController *vc = (TZPhotoPickerController *)lastVC;
+    [vc tzShowSystemTakePhoto];
+}
+
 @end
 
 
@@ -824,7 +853,7 @@
     }
 
     TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-    if (self.isFirstAppear) {
+    if (self.isFirstAppear && ![imagePickerVc tzNeedGoToSystemCameraToTakePhotoOrVideo]) {
         [imagePickerVc showProgressHUD];
     }
 

@@ -115,17 +115,11 @@ static CGFloat itemMargin = 5;
     
     self.operationQueue = [[NSOperationQueue alloc] init];
     self.operationQueue.maxConcurrentOperationCount = 3;
-
-    if (_showTakePhotoBtn && (tzImagePickerVc.goToTakePicture || tzImagePickerVc.goToTakeVideo)) {
-        tzImagePickerVc.goToTakePicture = NO;
-        tzImagePickerVc.goToTakeVideo = NO;
-        [self performSelector:@selector(takePhoto) withObject:nil afterDelay:0.1];
-    }
 }
 
 - (void)fetchAssetModels {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-    if (_isFirstAppear && !_model.models.count) {
+    if (_isFirstAppear && !_model.models.count && ![self canGoToSystemTakePhoto]) {
         [tzImagePickerVc showProgressHUD];
     }
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -798,6 +792,23 @@ static CGFloat itemMargin = 5;
     }
 }
 
+/// 显示系统拍照或拍视频
+- (void)tzShowSystemTakePhoto
+{
+    if (![self canGoToSystemTakePhoto]) return;
+
+    [self takePhoto];
+}
+
+- (BOOL)canGoToSystemTakePhoto
+{
+    TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+    if (_showTakePhotoBtn && [tzImagePickerVc tzNeedGoToSystemCameraToTakePhotoOrVideo]) {
+        return YES;
+    }
+    return NO;
+}
+
 /// 拍照按钮点击事件
 - (void)takePhoto {
     AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
@@ -891,6 +902,7 @@ static CGFloat itemMargin = 5;
         if (mediaTypes.count == 0) {
             // 没有可用的MediaTypes, 提示不可用
             [self showCameraCannotUseTip];
+            [tzImagePickerVc tzResetSystemCameraStatus];
             return;
         }
         self.imagePickerVc.mediaTypes= mediaTypes;
@@ -900,6 +912,7 @@ static CGFloat itemMargin = 5;
         if (self.presentedViewController == nil) {
             [self presentViewController:_imagePickerVc animated:YES completion:nil];
         }
+        [tzImagePickerVc tzResetSystemCameraStatus];
     } else {
         NSLog(@"模拟器中无法打开照相机,请在真机中使用");
     }

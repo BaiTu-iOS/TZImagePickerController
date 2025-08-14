@@ -14,6 +14,10 @@
 @property (nonatomic, assign) BOOL isFirstAppear;
 @property (nonatomic, assign) NSInteger columnNumber;
 @property (nonatomic, strong) TZAlbumModel *model;
+
+/// 显示系统拍照或拍视频
+- (void)tzShowSystemTakePhoto;
+
 @end
 
 

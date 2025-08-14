@@ -243,6 +243,15 @@
 /// 打开相机去拍视频（allowTakeVideo 为 YES时，设置该方法会进入拍视频）
 - (void)openCameraToTakeVideo;
 
+/// 是否需要直接进入系统相机拍照或拍视频
+- (BOOL)tzNeedGoToSystemCameraToTakePhotoOrVideo;
+
+/// 重置不需要直接进入拍照或拍视频
+- (void)tzResetSystemCameraStatus;
+
+/// 显示拍照或拍视频界面 -- 在presentViewController:animated:completion:的completion回调里面调用
+- (void)tzShowCameraTakePhotoOrVideoView;
+
 @property (nonatomic, assign) BOOL isSelectOriginalPhoto;
 @property (assign, nonatomic) BOOL needShowStatusBar;
 
