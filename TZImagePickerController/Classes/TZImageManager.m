@@ -136,7 +136,7 @@ static dispatch_once_t onceToken;
     // 这里加锁,防止多线程访问崩溃
     for (PHAssetCollection *collection in smartAlbums) {
         
-        [self.fetchAlbumsLock unlock];
+        [self.fetchAlbumsLock lock];
         
         // 有可能是PHCollectionList类的的对象，过滤掉
         if (![collection isKindOfClass:[PHAssetCollection class]]) {
@@ -151,7 +151,10 @@ static dispatch_once_t onceToken;
         if ([self isCameraRollAlbum:collection]) {
             PHFetchResult *fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:option];
             model = [self modelWithResult:fetchResult collection:collection isCameraRoll:YES needFetchAssets:needFetchAssets options:option];
-            if (completion) completion(model);
+            if (completion) {
+                completion(model);
+            }
+            [self.fetchAlbumsLock unlock];
             break;
         }
         [self.fetchAlbumsLock unlock];
