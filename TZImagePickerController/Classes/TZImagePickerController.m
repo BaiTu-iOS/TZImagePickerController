@@ -839,11 +839,13 @@
     } else if (imagePickerVc.allowPickingVideo) {
         self.navigationItem.title = [NSBundle tz_localizedStringForKey:@"Videos"];
     }
-    
-    if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
+
+    if (imagePickerVc.hidesBackButton) {
+        self.navigationItem.hidesBackButton = YES;
+    } else if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
         self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
     }
-    
+
     [self configTableView];
 }
 
